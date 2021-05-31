@@ -20,17 +20,18 @@ import javax.swing.JFrame;
 @SuppressWarnings("serial")
 public class Game extends Canvas implements Runnable {
 	
-	//GENERAL SETTINGS
+	//GENERAL SETTINGS:
+	
 	public static final int WIDTH = 240;
-	public static final int HEIGHT = 160;
+	public static final int HEIGHT = WIDTH/16*9;
 	public static final int SCALE = 3;
 	
-	public static final String WINDOW_TITLE = "";
+	public static final String WINDOW_TITLE = "BadEngine - Beserrovsky";
+	
+	//INSTANCES:
 	
 	
-	//INSTANCES
-	
-	
+	//METHODS:
 	
 	private void Spawns() {
 		
@@ -41,16 +42,21 @@ public class Game extends Canvas implements Runnable {
 	}
 	
 	private void renderFrame(Graphics g) {
-		g.setColor(Color.black);
-		g.fillRect(0, 0, getWidth(), getHeight()); //Background w/ width and height directly from Component class
+		
 	}
 	
-	//ENGINE SETTINGS
+	//ENGINE SETTINGS:
 	
-	public boolean metrics = true; //Enable for FPS on screen
+	public boolean SimpleMetrics = true; //Enable for FPS on window name
+	public boolean DrawnMetrics = true; //Enable for FPS on screen
 	
+	public int RenderLimit = 120; //Frames per second
+	public double AmountOfTicks = 60.0; //Ticks per second
 	
-	//ENGINE LOGIC ;)
+	public Color BgColor = Color.BLACK; //Color for basic background loop
+	public Color FpsColor = Color.YELLOW; //Color for FPS metrics
+	
+	//ENGINE LOGIC:
 	
 	private static JFrame frame;
 	private Thread mainThread;
@@ -101,43 +107,53 @@ public class Game extends Canvas implements Runnable {
 		}
 		
 		Graphics g = bs.getDrawGraphics();
+		g.setColor(BgColor);
+		g.fillRect(0, 0, getWidth(), getHeight()); //Background w/ width and height directly from Component class
 		renderFrame(g);
-		if(metrics) renderMetrics(g);
+		if(SimpleMetrics) frame.setTitle(WINDOW_TITLE + " - " + "UPS: " + lastUpdateRate + " | FPS: "+ lastFrameRate);;
+		if(DrawnMetrics) renderMetrics(g);
 		g.dispose();
 		bs.show();
 	}
 	
 	private int lastFrameRate = 0;
+	private int lastUpdateRate = 0;
 	private void renderMetrics(Graphics g) {
-		System.out.println("FPS: "+ lastFrameRate);
+		g.setColor(FpsColor);
+		g.drawString("UPS: " + lastUpdateRate + " | FPS: "+ lastFrameRate, 0, 10);
 	}
 
 	@Override
 	public void run() {
 		long lastTime = System.nanoTime();
-		double amountOfTicks = 60.0;
-		double ns = 1000000000 / amountOfTicks;
-		double delta = 0;
-		int frames = 0;
+		double nTicks = 1000000000 / AmountOfTicks;
+		double nRender = 1000000000 / RenderLimit;
+		double deltaTicks = 0, deltaRender = 0;
+		int ticks = 0, frames = 0;
 		double timer = System.currentTimeMillis();
 		requestFocus();
 		while(isRunning){
 			long now = System.nanoTime();
-			delta+= (now - lastTime) / ns;
+			deltaTicks+= (now - lastTime) / nTicks;
+			deltaRender+= (now - lastTime) / nRender;
 			lastTime = now;
-			if(delta >= 1) {
+			if(deltaTicks >= 1) {
 				handle_tick();
+				ticks++;
+				deltaTicks--;
+			}
+			if(deltaRender >= 1) {
 				handle_render();
 				frames++;
-				delta--;
+				deltaRender--;
 			}
-			
 			if(System.currentTimeMillis() - timer >= 1000){
+				lastUpdateRate = ticks;
 				lastFrameRate = frames;
+				ticks = 0;
 				frames = 0;
 				timer+=1000;
 			}
-			
 		}
 		
 		try {

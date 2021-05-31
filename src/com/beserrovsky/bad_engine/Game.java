@@ -4,57 +4,91 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
 /*TODO:
  * Implement: 
- * - player
  * - camera logic
  * - collision
  * - map
  * - sound
+ * - sprite
  * */
 
 @SuppressWarnings("serial")
-public class Game extends Canvas implements Runnable {
+public class Game extends Canvas implements Runnable, KeyListener {
 	
-	//GENERAL SETTINGS:
+	//GAME SETTINGS:
 	
 	public static final int WIDTH = 240;
 	public static final int HEIGHT = WIDTH/16*9;
 	public static final int SCALE = 3;
 	
 	public static final String WINDOW_TITLE = "BadEngine - Beserrovsky";
+	public Color BgColor = Color.BLACK; //Color for basic background
 	
-	//INSTANCES:
-	
-	
-	//METHODS:
+	public Scene scene;
+	public Player player;
 	
 	private void Spawns() {
-		
+		this.scene = new Scene(); //CREATE YOUR OWN SCENE EXTENDING SCENE
+		this.scene.objects.add(new GameObject());
+		this.player = new Player(0, 0, 10, 10);
+		addKeyListener(this);
 	}
 	
 	private void tickFrame() {
-		
+		this.player.tick();
+		this.scene.tick();
 	}
 	
 	private void renderFrame(Graphics g) {
+		this.scene.render(g);
+		this.player.render(g);
+	}
+	
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if(e.getKeyCode() == KeyEvent.VK_W) this.player.front = true;
+		if(e.getKeyCode() == KeyEvent.VK_A) this.player.left = true;
+		if(e.getKeyCode() == KeyEvent.VK_S) this.player.down = true;
+		if(e.getKeyCode() == KeyEvent.VK_D) this.player.right = true;
+	}
+	
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if(e.getKeyCode() == KeyEvent.VK_W) this.player.front = false;
+		if(e.getKeyCode() == KeyEvent.VK_A) this.player.left = false;
+		if(e.getKeyCode() == KeyEvent.VK_S) this.player.down = false;
+		if(e.getKeyCode() == KeyEvent.VK_D) this.player.right = false;
+	}
+	
+	@Override
+	public void keyTyped(KeyEvent e) {	
 		
 	}
+	
+	/*
+	 * 
+	 */
 	
 	//ENGINE SETTINGS:
 	
 	public boolean SimpleMetrics = true; //Enable for FPS on window name
-	public boolean DrawnMetrics = true; //Enable for FPS on screen
+	public boolean DrawnMetrics = false; //Enable for FPS on screen
 	
 	public int RenderLimit = 120; //Frames per second
 	public double AmountOfTicks = 60.0; //Ticks per second
+
+	public Color FpsColor = Color.YELLOW; //Color for FPS metrics	
 	
-	public Color BgColor = Color.BLACK; //Color for basic background loop
-	public Color FpsColor = Color.YELLOW; //Color for FPS metrics
+	/*
+	 * 
+	 */
 	
 	//ENGINE LOGIC:
 	
@@ -116,8 +150,8 @@ public class Game extends Canvas implements Runnable {
 		bs.show();
 	}
 	
-	private int lastFrameRate = 0;
-	private int lastUpdateRate = 0;
+	private int lastFrameRate = RenderLimit;
+	private int lastUpdateRate = (int)AmountOfTicks;
 	private void renderMetrics(Graphics g) {
 		g.setColor(FpsColor);
 		g.drawString("UPS: " + lastUpdateRate + " | FPS: "+ lastFrameRate, 0, 10);
